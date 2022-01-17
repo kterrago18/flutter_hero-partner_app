@@ -13,6 +13,7 @@ class AppStateManager extends ChangeNotifier {
   bool _initialized = false;
   bool _isEmailExist = false;
   bool _isAuthorized = false;
+  bool _isPhoneNumberExist = false;
   bool _loggedIn = false;
 
   bool _onboardingComplete = false;
@@ -25,6 +26,7 @@ class AppStateManager extends ChangeNotifier {
   bool get isAuthorized => _isAuthorized;
   bool get isOnboardingComplete => _onboardingComplete;
   int get getSelectedTab => _selectedTab;
+  bool get isPhoneNumberExist => _isPhoneNumberExist;
 
   void initializeApp() {
     // 7
@@ -37,6 +39,25 @@ class AppStateManager extends ChangeNotifier {
         notifyListeners();
       },
     );
+  }
+
+  Future<void> verifyEmailExistence(String email) async {
+    if (email == 'sample@gmail.com') {
+      _isEmailExist = true;
+    } else {
+      _isEmailExist = false;
+    }
+
+    notifyListeners();
+  }
+
+  Future<void> verifyPhoneNumberExistence(String phoneNumber) async {
+    if (phoneNumber == '09123456789') {
+      _isPhoneNumberExist = true;
+    } else {
+      _isPhoneNumberExist = false;
+    }
+    notifyListeners();
   }
 
   Future<void> login(String email, String password) async {

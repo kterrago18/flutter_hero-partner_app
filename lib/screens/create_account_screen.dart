@@ -26,6 +26,17 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
   final _passwordTextEditingController = TextEditingController();
   final _confirmPasswordTextEditingController = TextEditingController();
+  final _emailTextEditingController = TextEditingController();
+  final _phoneNumberEditingController = TextEditingController();
+
+  @override
+  void dispose() {
+    _passwordTextEditingController.dispose();
+    _emailTextEditingController.dispose();
+    _confirmPasswordTextEditingController.dispose();
+    _phoneNumberEditingController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,6 +110,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                     ),
                     SizedBoxSpacing.height10,
                     TextFormField(
+                      controller: _phoneNumberEditingController,
                       keyboardType: TextInputType.phone,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(
@@ -111,15 +123,15 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                       enableSuggestions: false,
                       autocorrect: false,
                       inputFormatters: [
-                        LengthLimitingTextInputFormatter(10),
+                        LengthLimitingTextInputFormatter(11),
                       ],
                       validator: (value) {
                         if (value!.isEmpty) {
                           return 'This field is required';
                         }
 
-                        if (value.length < 10) {
-                          return "Must be 10 digits long.";
+                        if (value.length < 11) {
+                          return "Must be 11 digits long.";
                         }
 
                         return null;
@@ -127,6 +139,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                     ),
                     SizedBoxSpacing.height10,
                     TextFormField(
+                      controller: _emailTextEditingController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(
@@ -287,44 +300,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                         ),
                       ],
                     ),
-                    SizedBox(
-                      height: 55,
-                      child: MaterialButton(
-                        color: kPrimaryColor,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8.0)),
-                        child: const Text(
-                          'Sign Up',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        onPressed: () async {
-                          // Provider.of<AppStateManager>(context, listen: false)
-                          //     .login('mockUsername', 'mockPassword');
-
-                          if (_formKey.currentState!.validate()) {
-                            if (_passwordTextEditingController.text !=
-                                _confirmPasswordTextEditingController.text) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                setSnackBarContent(
-                                    'New Password and Confirm Password do not match'),
-                              );
-                              return;
-                            }
-                            if (!_checkboxChecked) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                setSnackBarContent(
-                                    'Please indicate that you accept the Terms and Conditions'),
-                              );
-                              return;
-                            }
-                            print('Successfull');
-                            return;
-                          } else {
-                            print("UnSuccessfull");
-                          }
-                        },
-                      ),
-                    ),
+                    _buildButton(context, _emailTextEditingController,
+                        _phoneNumberEditingController),
                     SizedBoxSpacing.height16,
                     RichText(
                       textAlign: TextAlign.center,
@@ -353,6 +330,65 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
             ),
           ),
         ));
+  }
+
+  SizedBox _buildButton(BuildContext context, TextEditingController email,
+      TextEditingController phoneNumber) {
+    return SizedBox(
+      height: 55,
+      child: MaterialButton(
+        color: kPrimaryColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+        child: const Text(
+          'Sign Up',
+          style: TextStyle(color: Colors.white),
+        ),
+        onPressed: () async {
+          final appStateManager =
+              Provider.of<AppStateManager>(context, listen: false);
+
+          if (_formKey.currentState!.validate()) {
+            await appStateManager.verifyEmailExistence(email.text);
+            await appStateManager.verifyPhoneNumberExistence(phoneNumber.text);
+            if (_passwordTextEditingController.text !=
+                _confirmPasswordTextEditingController.text) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                setSnackBarContent(
+                    'New Password and Confirm Password do not match'),
+              );
+              return;
+            }
+            if (!_checkboxChecked) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                setSnackBarContent(
+                    'Please indicate that you accept the Terms and Conditions'),
+              );
+              return;
+            }
+            print('## email exist: ${appStateManager.isEmailExist}');
+            print('## phone exist: ${appStateManager.isPhoneNumberExist}');
+
+            if (appStateManager.isPhoneNumberExist) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                setSnackBarContent('Phone Number already existing.'),
+              );
+              return;
+            }
+            if (appStateManager.isEmailExist) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                setSnackBarContent('Email Address already existing.'),
+              );
+              return;
+            }
+
+            print('Successfull');
+            return;
+          } else {
+            print("UnSuccessfull");
+          }
+        },
+      ),
+    );
   }
 
   Widget buildText({required String label}) {
